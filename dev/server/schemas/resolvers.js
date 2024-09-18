@@ -1,7 +1,7 @@
 const { AuthenticationError } = require('apollo-server-express');
 const bcrypt = require ('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User, Book } = require('../models');
+const { User } = require('../models');
 
 const SECRET_KEY = 'mysecretsshhhhh';
 
@@ -23,7 +23,7 @@ const resolvers = {
       if (!user){
         throw new AuthenticationError("Please Enter your Email!");
       }
-      const isPasswordValid = await bycrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid){
         throw new AuthenticationError('Incorrect Password!');
       }
@@ -33,16 +33,25 @@ const resolvers = {
         user,
       };
     },
+    //username, email, password 
     addUser: async (parent, { username, email, password }) => {
+      console.log(username);
+      console.log(email);
+      console.log(password);
+      // console.log(args);
       const hashedPassword = await bcrypt.hash(password, 5)
+      console.log(hashedPassword);
       const user = await User.create(
-        { username },
-        { email },
-        { password: hashedPassword },
+        
+        { username, email, password: hashedPassword } ,
+        // { email } ,
+        // { password: hashedPassword } ,
         // { new: true }
       );
-      const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '2h'});
       
+      console.log(user);
+      const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '2h'});
+     
       return {
         token,
         user,
