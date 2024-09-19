@@ -2,32 +2,38 @@ const { AuthenticationError } = require('apollo-server-express');
 const bcrypt = require ('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const { signToken } = require ("../utils/auth")
 
-const SECRET_KEY = 'mysecretsshhhhh';
+// const SECRET_KEY = 'mysecretsshhhhh';
 
 
 const resolvers = {
   Query: {
     me: async (parent, args, context) => {
+      console.log(context);
       if (!context.user){
         throw new AuthenticationError("Please Log In!");
       }
-      const user = await User.findById(context.user.id).populate('savedBooks');
+      const user = await User.findById(context.user._id).populate('savedBooks');
       return user;
     },
     
   },
   Mutation: {
     login: async (parent, { email, password }) => {
+      
       const user = await User.findOne({ email });
       if (!user){
         throw new AuthenticationError("Please Enter your Email!");
       }
+      // console.log(user.password, password);
       const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log(isPasswordValid);
       if (!isPasswordValid){
         throw new AuthenticationError('Incorrect Password!');
       }
-      const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '2h'});
+      // const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '2h'});
+      const token = signToken(user);
       return {
         token,
         user,
@@ -49,9 +55,9 @@ const resolvers = {
         // { new: true }
       );
       
-      console.log(user);
-      const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '2h'});
-     
+      // console.log(user);
+      // const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '2h'});
+     const token = signToken(user);
       return {
         token,
         user,
@@ -61,9 +67,9 @@ const resolvers = {
       if (!context.user){
         throw new AuthenticationError('You need to log in!');
       }
-      const updatedUser = await User.findAndUpdate(
-        context.user_id,
-        { $addToSet: { savedBooks: bookData } },
+      const updatedUser = await User.findByIdAndUpdate(
+        context.user._id,
+        { $addToSet: { savedBooks:  bookData  } },
         { new: true, runValidators: true }
       ).populate('savedBooks');
 
@@ -74,7 +80,7 @@ const resolvers = {
       if (!context.user){
         throw new AuthenticationError('You need to log in!')
       };
-      const updatedUser = await User.findbyIdAndUodate(
+      const updatedUser = await User.findByIdAndUpdate(
         context.user._id,
         { $pull: { savedBooks: { bookId } } },
         { new: true }

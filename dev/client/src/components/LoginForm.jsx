@@ -31,6 +31,7 @@ const LoginForm = () => {
 
     try {
       // Execute the LOGIN_USER mutation
+      // console.log(userFormData);
       const { data } = await loginUser({
         variables: { ...userFormData },
       });
